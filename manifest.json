@@ -1,0 +1,16 @@
+{
+	"name": "Microsoft Job Hunter",
+	"version": "1.0",
+	"description": "Improves the Microsoft job hunt",
+	"manifest_version": 2,
+	"permissions": [
+		"activeTab"
+	],
+	"content_scripts": [
+		{
+			"matches": ["https://careers.microsoft.com/*"],
+			"js": ["contentScript.js"],
+			"css": ["content.css"]
+		}
+	]
+}
