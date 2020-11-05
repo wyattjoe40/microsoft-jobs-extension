@@ -1,85 +1,182 @@
-console.log("Starting MicroHunt...")
+debug("Starting MicroHunt...")
 
-function log(message) {
-    console.log("MicroHunt: " + message);
+var isDebugLogsOn = true;
+var isWarnLogsOn = true;
+
+function debug(message) {
+    if (isDebugLogsOn) console.log("MicroHunt: Debug: " + message);
 }
 
-var foundJobsList = false;
+function warn(message) {
+    if (isWarnLogsOn) console.warn("MicroHunt: WARN: " + message);
+}
 
-function performJobLinksSearch() {
-    // check to see if the jobs list has been loaded
-    if (!foundJobsList) {
-        var jobsList = document.querySelector('[class="phs-jobs-list"]') 
-        if (!jobsList) {
+// a list of job nodes. each job node contains a ton of dom nodes that make up the row of the job
+var jobs;
+
+function run(noJobsListCallback, noJobsFoundCallback, jobsFoundCallback) {
+    var jobsList = document.querySelector('[class="phs-jobs-block"]') 
+    if (!jobsList) {
+        warn("Jobs list disappeared. Stopping MicroHunt");
+        if (noJobsListCallback) noJobsListCallback();
+        return;
+    }
+    var jobsFound = jobsList.querySelectorAll("li div.information-block")
+    if (!jobsFound) {
+        warn("No jobs found... This isn't expected, but let's wait to see if they show up later.");
+        if (noJobsFoundCallback) noJobsFoundCallback();
+        noJobsFoundCallback();
+        return;
+    }
+
+    jobs = jobsFound;
+    if (jobsFoundCallback) jobsFoundCallback();
+    updateHTMLWithJobsList();
+}
+
+function jobListChanged(mutations, observer) {
+    debug("Jobs list changed");
+    function disconnect() {
+        observer.disconnect()
+    }
+
+    run(disconnect, null, disconnect);
+}
+
+function updateHTMLWithJobsList() {
+    jobs.forEach(job => {
+        //var job = jobs[0] // comment out the foreach and uncomment this for easy one job debugging
+        // debug(job)
+        var jobLink = job.querySelector("a");
+        if (!jobLink || !jobLink.href) {
+            warn("No job link found...");
             return
         }
 
-        log("Found job list")
-        foundJobsList = true
-    }
+        fetch(jobLink.href).then(r => r.text()).then(result => {
+            // Result now contains the response text, do what you want...
 
-    const jobLinks = document.querySelectorAll('[class="job-title"]')
-    log("Job Links: ");
-    for (var i = 0; i < jobLinks.length; i++) {
-        log(jobLinks[i].parentElement.getAttribute("href"))
-        // TODO wydavis: Test calling the href's to get the contents...
-    }
+            // get the job description
+            var fullDescription = getJobDescription(result);
+            if (fullDescription) {
+                var json = JSON.parse(fullDescription)
+                if (!json) {
+                    warn("Job description wasn't correct JSON")
+                    return;
+                }
+
+                var jobNode = json.jobDetail.data.job;
+                if (!jobNode) {
+                    warn("No job node found in the JSON.")
+                    return
+                }
+
+                var title = jobNode.targetStandardTitle
+                var description = jobNode.description
+                var qualifications = jobNode.jobQualifications
+                var responsibilities = jobNode.jobResponsibilities
+                var summary = jobNode.jobSummary
+
+                var descriptionNode = job.querySelector(".description");
+                if (!descriptionNode) {
+                    warn("Could not find description node for job");
+                    return;
+                }
+                while (descriptionNode.lastChild) {
+                    descriptionNode.removeChild(descriptionNode.lastChild);
+                }
+
+                // append the description
+                var divWithJobInfo = document.createElement('div');
+                divWithJobInfo.innerHTML = description;
+                debug("divWithJobInfo description");
+                debug(divWithJobInfo);
+                descriptionNode.append(divWithJobInfo);
+
+                // append the qualifications
+                divWithJobInfo = document.createElement('div');
+                divWithJobInfo.innerHTML = qualifications;
+                debug("divWithJobInfo qualifications");
+                debug(divWithJobInfo);
+                descriptionNode.append(divWithJobInfo);
+                removeNodesThatMatch(divWithJobInfo, ".//p[contains(., 'Microsoft is an') or contains(., 'Benefits/perks listed')]");
+            }
+        })
+    });
 }
 
-function performHintSentenceSearch() {
-    const hintSentenceSpans = document.querySelectorAll('[data-test="hint-sentence"]');
-    if (hintSentenceSpans.length == 0) {
-        log("No hint sentence found.");
-    } else if (hintSentenceSpans.length > 1) {
-        log("Multiple hint sentences found.");
-    } else { // length == 1
-        // get the only hint sentence element
-        // change the children to nothing
-        log("Found one hint sentence.")
-        var hintSentenceSpan = hintSentenceSpans[0];
-        for (var i = 0; i < hintSentenceSpan.children.length; i++) {
-            if (!hintSentenceSpan.children[i].classList.contains("powerlingo-hint-token")) {
-                hintSentenceSpan.children[i].classList.add("powerlingo-hint-token");
-            }
-        }
-        if (!hintSentenceSpan.classList.contains("powerlingo-hint-sentence")) {
-            hintSentenceSpan.classList.add("powerlingo-hint-sentence");
-        };
+function removeNodesThatMatch(node, searchString) {
+    var paragraphsToDelete = document.evaluate(searchString, node, null, XPathResult.ANY_TYPE, null );
+    var paragraphToDelete = paragraphsToDelete.iterateNext();
+    var list = []
+    // don't edit them while iterating, otherwise we get an error
+    while(paragraphToDelete) {
+        list.push(paragraphToDelete);
+        paragraphToDelete = paragraphsToDelete.iterateNext();
+    }
+    list.forEach(p => {
+        debug("Setting the inner html to empty for paragraph: ")
+        debug(p)
+        p.innerHTML = ""
+    })
+}
+
+function getJobDescription(response) {
+    var startIndex = response.indexOf('{"siteConfig":')
+    if (startIndex == -1) {
+        warn("Could not find start of job description")
+        return
+    }
+    var endIndex = response.indexOf(',"flashParams":{}}');
+    if (endIndex == -1) {
+        warn("Could not find end of job description")
+        return
+    }
+
+    if (endIndex < startIndex) {
+        warn("endIndex is less than startIndex");
+        return;
+    }
+
+    return response.substring(startIndex, endIndex) + "}"
+}
+
+function performJobLinksSearch() {
+    debug("Document changed");
+    var jobsList = document.querySelector('[class="phs-jobs-list"]') 
+
+    if (jobsList) {
+        debug("Found jobs list")
+        observer.disconnect();
+        observerFunction = jobListChanged;
+        observer.observe(jobsList, {
+            subtree: true,
+            attributes: true
+        });
+    } else {
+        debug("No jobs list found")
     }
 }
 
 MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 
-var observer = new MutationObserver(function(mutations, observer) {
-    /*
-    log(mutations)
-    mutations.forEach(function(mutation) {
-        log(mutation.target.innerText);
-        switch (mutation.type) {
-            case "childList":
-                log(mutation);
-                break;
-            default:
-                log(mutation.type);
-                break;
-        }
-    });
-    */
-    //console.log(mutations)
-    // fired when a mutation occurs
+var observerFunction = performJobLinksSearch;
 
-    //performHintSentenceSearch();
-    performJobLinksSearch();
-    // ...
+var observer = new MutationObserver(function(mutations, observer) {
+    observerFunction(mutations, observer);
+});
+
+var jobListObserver = new MutationObserver(function(mutations, observer) {
+    debug("jobListObserver fired, mutations: ");
+    mutations.forEach( mutation => {
+        debug(mutation);
+    })
 });
 
 // define what element should be observed by the observer
 // and what types of mutations trigger the callback
-var jobsList = document.querySelector('[class="phs-jobs-list"]') 
-log("JobsList: ")
-log(jobsList)
 observer.observe(document, {
   subtree: true,
-  attributes: true
+  childList: true
   //...
 });
