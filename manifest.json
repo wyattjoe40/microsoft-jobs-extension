@@ -1,7 +1,7 @@
 {
 	"name": "Microsoft Job Hunter",
 	"version": "0.1",
-	"description": "Improves the Microsoft job hunt",
+	"description": "Improves browsing the open Microsoft jobs on careers.microsoft.com by adding job descriptions and qualifications to the job search result page.",
 	"manifest_version": 2,
 	"icons": {"128": "icons/icon128.png", 
 		"48": "icons/icon48.png", 
