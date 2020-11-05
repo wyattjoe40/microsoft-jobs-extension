@@ -3,8 +3,7 @@ console.log("Running MicroHunt background.js...");
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   console.log("Tab changed listener, tab: ");
   console.log(tab);
-  let url = changeInfo.url;
-  if (url && url.includes("careers.microsoft.com")) {
+  if (tab.url && tab.url.includes("careers.microsoft.com")) {
     chrome.pageAction.show(tabId, () => {
       console.log("PAGE ACTION WAS CLICKED");
     });
