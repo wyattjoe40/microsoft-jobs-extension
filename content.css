@@ -1,21 +1,7 @@
-/*
-span[data-test~="hint-sentence"] {
-    color: white;
-    pointer-events: none;
+.job-description-header {
+    font-weight: bold;
 }
-*/
-
-.powerlingo-hint-sentence {
-    color: white !important;
-    pointer-events: none !important;
+ 
+.job-description-content {
+    padding-left: 4em;
 }
-
-.powerlingo-hint-token {
-    background-image: none !important;
-}
-
-/*
-div[data-test~="hint-token"] {
-    background-image: none;
-}
-*/

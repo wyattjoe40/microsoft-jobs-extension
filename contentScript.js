@@ -77,6 +77,8 @@ function updateHTMLWithJobsList() {
                 var responsibilities = jobNode.jobResponsibilities
                 var summary = jobNode.jobSummary
 
+                // find the description node and remove its contents. The default description
+                // is not valuable; it is short and vague 
                 var descriptionNode = job.querySelector(".description");
                 if (!descriptionNode) {
                     warn("Could not find description node for job");
@@ -87,15 +89,25 @@ function updateHTMLWithJobsList() {
                 }
 
                 // append the description
+                var header = document.createElement("h2");
+                header.innerText = "Description"
+                header.className = "job-description-header"
+                descriptionNode.append(header);
                 var divWithJobInfo = document.createElement('div');
                 divWithJobInfo.innerHTML = description;
+                divWithJobInfo.className = "job-description-content"
                 debug("divWithJobInfo description");
                 debug(divWithJobInfo);
                 descriptionNode.append(divWithJobInfo);
 
                 // append the qualifications
+                header = document.createElement("h2");
+                header.innerText = "Qualifications"
+                header.className = "job-description-header"
+                descriptionNode.append(header);
                 divWithJobInfo = document.createElement('div');
                 divWithJobInfo.innerHTML = qualifications;
+                divWithJobInfo.className = "job-description-content"
                 debug("divWithJobInfo qualifications");
                 debug(divWithJobInfo);
                 descriptionNode.append(divWithJobInfo);
