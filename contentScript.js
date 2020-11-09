@@ -25,7 +25,6 @@ function run(noJobsListCallback, noJobsFoundCallback, jobsFoundCallback) {
     if (!jobsFound) {
         warn("No jobs found... This isn't expected, but let's wait to see if they show up later.");
         if (noJobsFoundCallback) noJobsFoundCallback();
-        noJobsFoundCallback();
         return;
     }
 
