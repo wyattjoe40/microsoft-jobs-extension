@@ -1,123 +1,137 @@
-debug("Starting MicroHunt...")
+debug("Starting Microsoft Jobs extension...")
 
 var isDebugLogsOn = true;
 var isWarnLogsOn = true;
 
 function debug(message) {
-    if (isDebugLogsOn) console.log("MicroHunt: Debug: " + message);
+    if (isDebugLogsOn) console.log(message);
 }
 
 function warn(message) {
-    if (isWarnLogsOn) console.warn("MicroHunt: WARN: " + message);
+    if (isWarnLogsOn) console.warn(message);
 }
 
 // a list of job nodes. each job node contains a ton of dom nodes that make up the row of the job
 var jobs;
 
 function run(noJobsListCallback, noJobsFoundCallback, jobsFoundCallback) {
+    debug("Running the main logic...")
+
     var jobsList = document.querySelector('[class="phs-jobs-block"]') 
     if (!jobsList) {
-        warn("Jobs list disappeared. Stopping MicroHunt");
         if (noJobsListCallback) noJobsListCallback();
         return;
     }
     var jobsFound = jobsList.querySelectorAll("li div.information-block")
     if (!jobsFound) {
-        warn("No jobs found... This isn't expected, but let's wait to see if they show up later.");
         if (noJobsFoundCallback) noJobsFoundCallback();
         return;
     }
 
     jobs = jobsFound;
-    if (jobsFoundCallback) jobsFoundCallback();
     updateHTMLWithJobsList();
 }
 
 function jobListChanged(mutations, observer) {
     debug("Jobs list changed");
-    function disconnect() {
+
+    function noJobsListCallback() {
+        warn("Jobs list disappeared. Stopping extension");
         observer.disconnect()
     }
 
-    run(disconnect, null, disconnect);
+    function noJobsCallback() {
+        warn("No jobs found... This isn't expected, stop the extension.");
+        observer.disconnect()
+    }
+
+    run(noJobsListCallback, noJobsCallback);
 }
 
 function updateHTMLWithJobsList() {
     jobs.forEach(job => {
-        //var job = jobs[0] // comment out the foreach and uncomment this for easy one job debugging
-        // debug(job)
+        debug("Updating HTML for job: ");
+        debug(job);
+
         var jobLink = job.querySelector("a");
         if (!jobLink || !jobLink.href) {
             warn("No job link found...");
             return
         }
 
-        fetch(jobLink.href).then(r => r.text()).then(result => {
-            // Result now contains the response text, do what you want...
-
+        debug("Fetching for link: " + jobLink.href)
+        fetch(jobLink.href).then(r => {debug("got response for url: " + jobLink.href + ", status code: " + r.status); return r.text();}).then(result => {
+            // Result now contains the response text
+            console.log("Updating for link: " + jobLink.href)
             // get the job description
             var fullDescription = getJobDescription(result);
-            if (fullDescription) {
-                var json = JSON.parse(fullDescription)
-                if (!json) {
-                    warn("Job description wasn't correct JSON")
-                    return;
-                }
-
-                var jobNode = json.jobDetail.data.job;
-                if (!jobNode) {
-                    warn("No job node found in the JSON.")
-                    return
-                }
-
-                var title = jobNode.targetStandardTitle
-                var description = jobNode.description
-                var qualifications = jobNode.jobQualifications
-                var responsibilities = jobNode.jobResponsibilities
-                var summary = jobNode.jobSummary
-
-                // find the description node and remove its contents. The default description
-                // is not valuable; it is short and vague 
-                var descriptionNode = job.querySelector(".description");
-                if (!descriptionNode) {
-                    warn("Could not find description node for job");
-                    return;
-                }
-                while (descriptionNode.lastChild) {
-                    descriptionNode.removeChild(descriptionNode.lastChild);
-                }
-
-                // append the description
-                var header = document.createElement("h2");
-                header.innerText = "Description"
-                header.className = "job-description-header"
-                descriptionNode.append(header);
-                var divWithJobInfo = document.createElement('div');
-                divWithJobInfo.innerHTML = description;
-                divWithJobInfo.className = "job-description-content"
-                debug("divWithJobInfo description");
-                debug(divWithJobInfo);
-                descriptionNode.append(divWithJobInfo);
-
-                // append the qualifications
-                header = document.createElement("h2");
-                header.innerText = "Qualifications"
-                header.className = "job-description-header"
-                descriptionNode.append(header);
-                divWithJobInfo = document.createElement('div');
-                divWithJobInfo.innerHTML = qualifications;
-                divWithJobInfo.className = "job-description-content"
-                debug("divWithJobInfo qualifications");
-                debug(divWithJobInfo);
-                descriptionNode.append(divWithJobInfo);
-                removeNodesThatMatch(divWithJobInfo, ".//p[contains(., 'Microsoft is an') or contains(., 'Benefits/perks listed')]");
+            if (!fullDescription) {
+                warn("No description found for job");
+                return;
             }
+
+            var json = JSON.parse(fullDescription)
+            if (!json) {
+                warn("Job description wasn't correct JSON")
+                return;
+            }
+
+            var jobNode = json.jobDetail.data.job;
+            if (!jobNode) {
+                warn("No job node found in the JSON.")
+                return
+            }
+
+            // other fields on jobNode that we could use in the future:
+            //      targetStandardTitle
+            //      jobResponsibilities
+            //      jobSummary
+            var description = jobNode.description
+            var qualifications = jobNode.jobQualifications
+
+            // find the description node and remove its contents. The default description
+            // is not valuable; it is short and vague 
+            var descriptionNode = job.querySelector(".description");
+            if (!descriptionNode) {
+                warn("Could not find description node for job");
+                return;
+            }
+
+            while (descriptionNode.lastChild) {
+                descriptionNode.removeChild(descriptionNode.lastChild);
+            }
+
+            // append the description
+            var header = document.createElement("h2");
+            header.innerText = "Description"
+            header.className = "job-description-header"
+            descriptionNode.append(header);
+            var newDivForDescription = document.createElement('div');
+            newDivForDescription.innerHTML = description;
+            newDivForDescription.className = "job-description-content"
+            debug("divWithJobInfo description");
+            debug(newDivForDescription);
+            descriptionNode.append(newDivForDescription);
+
+            // append the qualifications
+            header = document.createElement("h2");
+            header.innerText = "Qualifications"
+            header.className = "job-description-header"
+            descriptionNode.append(header);
+            newDivForQualifications = document.createElement('div');
+            newDivForQualifications.innerHTML = qualifications;
+            newDivForQualifications.className = "job-description-content"
+            debug("divWithJobInfo qualifications");
+            debug(newDivForQualifications);
+            descriptionNode.append(newDivForQualifications);
+            // some job postings have paragraphs containing MSFT legal boiler plate in the qualifications description, so remove it if so
+            removeNodesThatMatch(newDivForQualifications, ".//p[contains(., 'Microsoft is an') or contains(., 'Benefits/perks listed')]");
         })
     });
 }
 
 function removeNodesThatMatch(node, searchString) {
-    var paragraphsToDelete = document.evaluate(searchString, node, null, XPathResult.ANY_TYPE, null );
+    var paragraphsToDelete = document.evaluate(searchString, node, null, XPathResult.ANY_TYPE, null);
     var paragraphToDelete = paragraphsToDelete.iterateNext();
     var list = []
     // don't edit them while iterating, otherwise we get an error
@@ -154,16 +168,24 @@ function getJobDescription(response) {
 
 function performJobLinksSearch() {
     debug("Document changed");
-    var jobsList = document.querySelector('[class="phs-jobs-list"]') 
-
+    var jobsList = document.querySelector('[class="phs-jobs-list"] ul') 
     if (jobsList) {
         debug("Found jobs list")
+        debug(jobsList);
+
+        var jobItems = jobsList.querySelectorAll("li");
+        debug("jobItems: ");
+        debug(jobItems);
+
+        // This hooks up an observer so we can run our core code whenever the jobs list changes in the future
         observer.disconnect();
         observerFunction = jobListChanged;
         observer.observe(jobsList, {
-            subtree: true,
-            attributes: true
+            childList: true
         });
+
+        // Run our core code now since we found a jobs list
+        run();
     } else {
         debug("No jobs list found")
     }
@@ -175,13 +197,6 @@ var observerFunction = performJobLinksSearch;
 
 var observer = new MutationObserver(function(mutations, observer) {
     observerFunction(mutations, observer);
-});
-
-var jobListObserver = new MutationObserver(function(mutations, observer) {
-    debug("jobListObserver fired, mutations: ");
-    mutations.forEach( mutation => {
-        debug(mutation);
-    })
 });
 
 // define what element should be observed by the observer
