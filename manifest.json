@@ -1,7 +1,7 @@
 {
-	"name": "Microsoft Job Hunter",
+	"name": "Microsoft Jobs",
 	"version": "0.1",
-	"description": "Improves browsing the open Microsoft jobs on careers.microsoft.com by adding job descriptions and qualifications to the job search result page.",
+	"description": "Improves browsing the open Microsoft jobs on careers.microsoft.com by adding more job information",
 	"manifest_version": 2,
 	"icons": {"128": "icons/icon128.png", 
 		"48": "icons/icon48.png", 
@@ -12,7 +12,7 @@
 		"persistent": false
 	},
 	"page_action": {
-		"default_title": "MicroHunt"
+		"default_title": "Microsoft Jobs"
 	},
 	"permissions": [
 		"activeTab",
