@@ -1,7 +1,12 @@
 debug("Starting Microsoft Jobs extension...")
 
-var isDebugLogsOn = true;
+var isDebugLogsOn = false;
 var isWarnLogsOn = true;
+chrome.storage.sync.get({
+    debugLogs: false
+}, function(items) {
+    isDebugLogsOn = items.debugLogs
+});
 
 function debug(message) {
     if (isDebugLogsOn) console.log(message);
@@ -62,7 +67,7 @@ function updateHTMLWithJobsList() {
         debug("Fetching for link: " + jobLink.href)
         fetch(jobLink.href).then(r => {debug("got response for url: " + jobLink.href + ", status code: " + r.status); return r.text();}).then(result => {
             // Result now contains the response text
-            console.log("Updating for link: " + jobLink.href)
+            debug("Updating for link: " + jobLink.href)
             // get the job description
             var fullDescription = getJobDescription(result);
             if (!fullDescription) {

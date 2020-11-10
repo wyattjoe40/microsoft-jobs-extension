@@ -5,7 +5,12 @@ The Microsoft Jobs Extension makes viewing Microsoft job openings easier.
 Download the released version here: [Microsoft Jobs on Chrome Web Store](https://chrome.google.com/webstore/detail/microsoft-jobs/cjfkahkcmankgadjajhiabccjiiddlol)
 
 Features:
-* Shows full job description and qualifications on the job results page
+* Shows full job description and qualifications on the job results page (e.g. https://careers.microsoft.com/us/en/search-results?keywords=software%20engineer)
 
-TODOs:
-* When the user changes any job search filters or ordering the job list is updated but the extension is not ran on the new jobs. The fix is to observe when the job list changes and re-run the extension.
+# Example
+
+## Before
+![](docs/before.png)
+
+## After
+![](docs/after.png)

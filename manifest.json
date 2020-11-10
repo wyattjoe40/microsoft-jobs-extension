@@ -7,6 +7,10 @@
 		"48": "icons/icon48.png", 
 		"16": "icons/icon16.png"
 	},
+	"options_ui": {
+		"page": "options.html",
+		"open_in_tab": false
+	},
 	"background": {
 		"scripts": ["background.js"],
 		"persistent": false
@@ -15,6 +19,7 @@
 		"default_title": "Microsoft Jobs"
 	},
 	"permissions": [
+		"storage",
 		"activeTab",
 		"https://careers.microsoft.com/"
 	],
