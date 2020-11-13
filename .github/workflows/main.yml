@@ -6,7 +6,7 @@ name: Zip New Releases
 # events but only for the main branch
 on:
   release:
-    types: [published]
+    types: [published, edited]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -32,7 +32,7 @@ jobs:
         uses: TheDoctor0/zip-release@0.4.1
         with:
           # Filename for archive
-          filename: "{{steps.tagName.outputs.tag}}.zip" # default is release.zip
+          filename: "${{steps.tagName.outputs.tag}}.zip" # default is release.zip
           # Base path for archive files
           path: "./src" # optional, default is .
           # Working directory before zipping
@@ -41,3 +41,8 @@ jobs:
           #exclusions: # optional, default is 
           # Tool to use for archiving
           #type: # optional, default is zip
+      - uses: AButler/upload-release-assets@v2.0
+        name: Upload Zip As Release Asset
+        with:
+          files: '${{steps.tagname.outputs.tag}}.zip'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
