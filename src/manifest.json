@@ -1,6 +1,6 @@
 {
 	"name": "Microsoft Jobs",
-	"version": "0.1",
+	"version": "0.2",
 	"description": "Improves browsing the open Microsoft jobs on careers.microsoft.com by adding more job information",
 	"manifest_version": 2,
 	"icons": {"128": "icons/icon128.png", 
