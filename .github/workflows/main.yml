@@ -24,10 +24,10 @@ jobs:
         run: pwd && ls
       
       - name: Zip
-        run: cd src && zip "microsoft-jobs-extension.zip" *
+        run: zip -r "microsoft-jobs-extension.zip" src/
       
       - uses: AButler/upload-release-assets@v2.0
         name: Upload Zip As Release Asset
         with:
-          files: 'src/microsoft-jobs-extension.zip'
+          files: 'microsoft-jobs-extension.zip'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
